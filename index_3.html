@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Code Control HM</title>
+<style>
+  :root{
+    --azul-escuro:#0f2440;
+    --azul:#1e4d8f;
+    --azul-claro:#eef4ff;
+    --texto:#1a1f2b;
+    --cinza:#6b7280;
+    --borda:#e5e9f2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:linear-gradient(160deg, var(--azul-escuro) 0%, var(--azul) 45%, #2f6bc4 100%);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px 12px 48px;
+    color:var(--texto);
+  }
+  .card{
+    background:#fff;
+    width:100%;
+    max-width:460px;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);
+  }
+  .topo{
+    background:linear-gradient(120deg, var(--azul-escuro), var(--azul));
+    padding:22px 20px 60px;
+    text-align:center;
+    position:relative;
+  }
+  .marca{color:#cfe0ff; font-size:12px; letter-spacing:2px; text-transform:uppercase; font-weight:600;}
+  .foto-wrap{
+    position:absolute; left:50%; bottom:-52px; transform:translateX(-50%);
+    width:104px; height:130px; border-radius:14px; background:#fff; padding:4px;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+  }
+  .foto-wrap img{width:100%; height:100%; object-fit:cover; border-radius:10px; display:block;}
+  .foto-placeholder{
+    width:100%;height:100%;border-radius:10px; background:var(--azul-claro);
+    display:flex;align-items:center;justify-content:center; color:var(--azul); font-size:34px; font-weight:700;
+  }
+  .conteudo{padding:66px 26px 30px; text-align:center;}
+  .nome{font-size:22px; font-weight:700; margin:0 0 6px; color:var(--azul-escuro);}
+  .funcao{display:inline-block; background:var(--azul-claro); color:var(--azul); padding:5px 14px; border-radius:999px; font-size:13px; font-weight:600; margin-bottom:4px;}
+  .tipo-sanguineo{background:#fef2f2; color:#b91c1c; margin-left:6px;}
+  .empresa{color:var(--cinza); font-size:14px; margin-top:8px;}
+  .secao{margin-top:26px; text-align:left;}
+  .secao h3{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--cinza); margin:0 0 12px; display:flex; align-items:center; gap:8px;}
+  .secao h3::before{content:''; width:4px;height:16px; background:var(--azul); border-radius:3px; display:inline-block;}
+  .treinamento{border:1px solid var(--borda); border-radius:14px; padding:12px 14px; margin-bottom:10px;}
+  .treinamento-topo{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .treinamento-nome{font-weight:600; font-size:14.5px; color:var(--texto);}
+  .status-pill{font-size:11px; font-weight:700; color:#fff; padding:3px 10px; border-radius:999px; white-space:nowrap;}
+  .treinamento-datas{display:flex; gap:18px; margin-top:8px; font-size:12.5px; color:var(--cinza);}
+  .treinamento-datas b{color:var(--texto);}
+  .obs-box{background:var(--azul-claro); border-radius:14px; padding:14px 16px; font-size:14px; color:var(--texto); line-height:1.5; white-space:pre-wrap;}
+  .vazio{color:var(--cinza); font-size:13.5px; font-style:italic;}
+  .doc-link{
+    display:flex; align-items:center; gap:8px;
+    background:var(--azul-claro); color:var(--azul); text-decoration:none;
+    font-weight:600; font-size:14px; padding:12px 16px; border-radius:12px; width:100%;
+    box-sizing:border-box; margin-bottom:8px;
+  }
+  .rodape{text-align:center; margin-top:28px; font-size:11px; color:var(--cinza);}
+  .estado{background:#fff; padding:40px 26px; border-radius:22px; text-align:center; max-width:400px;}
+  .spinner{
+    width:34px; height:34px; border-radius:50%;
+    border:4px solid var(--azul-claro); border-top-color:var(--azul);
+    animation:girar 0.8s linear infinite; margin:0 auto 14px;
+  }
+  @keyframes girar{to{transform:rotate(360deg);}}
+
+  /* ---------- TELA DE PIN (acesso à ficha) ---------- */
+  .pin-tela{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;
+    background:linear-gradient(160deg, var(--azul-escuro) 0%, var(--azul) 45%, #2f6bc4 100%);
+  }
+  .pin-card{
+    background:#fff; width:100%; max-width:380px; border-radius:22px;
+    padding:36px 28px; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,.35);
+  }
+  .pin-card h2{margin:0 0 8px; font-size:20px; color:var(--azul-escuro);}
+  .pin-card .msg{color:var(--cinza); font-size:14.5px; margin:0 0 22px; line-height:1.5;}
+  .pin-card input{
+    width:100%; padding:13px; border:1.5px solid var(--borda); border-radius:12px;
+    font-size:18px; text-align:center; letter-spacing:4px; font-family:inherit;
+    box-sizing:border-box; outline:none;
+  }
+  .pin-card input:focus{border-color:var(--azul);}
+  .pin-card .btn{
+    width:100%; margin-top:14px; padding:13px; background:var(--azul); color:#fff;
+    border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer;
+    font-family:inherit; transition:.15s;
+  }
+  .pin-card .btn:hover{background:var(--azul-escuro);}
+  .pin-erro{display:none; margin-top:12px; font-size:13px; color:#b91c1c; font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- TELA DE PIN: aparece antes da ficha -->
+<div class="pin-tela" id="telaPin">
+  <div class="pin-card">
+    <div class="marca" style="margin-bottom:12px;">QR Code Control HM</div>
+    <h2>🔒 Acesso restrito</h2>
+    <p class="msg">Peça para o colaborador o Pin</p>
+    <input type="password" id="pinFicha" placeholder="Digite o PIN" autocomplete="off" onkeydown="if(event.key==='Enter')validarAcesso()">
+    <button class="btn" onclick="validarAcesso()">Acessar ficha</button>
+    <p class="pin-erro" id="erroPin">PIN incorreto. Verifique com o colaborador.</p>
+  </div>
+</div>
+
+<!-- CONTEÚDO DA FICHA (oculto até validar o PIN) -->
+<div id="raiz" style="display:none;">
+  <div class="estado">
+    <div class="spinner"></div>
+    <p>Carregando dados do funcionário...</p>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   IMPORTANTE: cole aqui a URL do seu Apps Script (a que termina em /exec)
+   ====================================================================== */
+const URL_DO_SCRIPT = "https://script.google.com/macros/s/AKfycbzigFN6BkL6JSbnOedHgrCVrurx673t7USMDBX_2rVTfB0g01PX1KyJ1pD-uaWUUiliXA/exec";
+
+/* ======================================================================
+   VALIDAÇÃO DO PIN (via API do Apps Script)
+   ====================================================================== */
+async function validarAcesso(){
+  const pin = document.getElementById('pinFicha').value.trim();
+  if(!pin) return;
+  try{
+    const resposta = await fetch(URL_DO_SCRIPT + '?validarPin=' + encodeURIComponent(pin));
+    const dados = await resposta.json();
+    if(dados && dados.ok){
+      document.getElementById('telaPin').style.display = 'none';
+      document.getElementById('raiz').style.display = 'block';
+      carregar();
+    } else {
+      mostrarErroPin();
+    }
+  } catch(e){
+    mostrarErroPin();
+  }
+}
+
+function mostrarErroPin(){
+  document.getElementById('erroPin').style.display = 'block';
+  document.getElementById('pinFicha').value = '';
+  document.getElementById('pinFicha').focus();
+}
+
+function pegarParametro(nome){
+  const params = new URLSearchParams(window.location.search);
+  return params.get(nome);
+}
+function escapeHtml(texto){
+  const div = document.createElement('div');
+  div.innerText = texto == null ? '' : texto;
+  return div.innerHTML;
+}
+async function carregar(){
+  const id = pegarParametro('id');
+  const raiz = document.getElementById('raiz');
+  if (!id) {
+    raiz.innerHTML = '<div class="estado"><h2>Nenhum ID informado</h2><p>Use um link ou QR Code válido.</p></div>';
+    return;
+  }
+  try {
+    const resposta = await fetch(URL_DO_SCRIPT + '?id=' + encodeURIComponent(id) + '&formato=json');
+    const dados = await resposta.json();
+    if (!dados || dados.erro) {
+      raiz.innerHTML = '<div class="estado"><h2>Funcionário não encontrado</h2><p>Verifique se o QR Code ou o link está correto.</p></div>';
+      return;
+    }
+    renderizar(dados);
+  } catch (e) {
+    raiz.innerHTML = '<div class="estado"><h2>Não foi possível carregar</h2><p>Verifique sua conexão com a internet e tente novamente.</p></div>';
+  }
+}
+function renderizar(f){
+  const raiz = document.getElementById('raiz');
+  const fotoHtml = f.fotoUrl
+    ? `<img src="${escapeHtml(f.fotoUrl)}" alt="Foto de ${escapeHtml(f.nome)}">`
+    : `<div class="foto-placeholder">${escapeHtml((f.nome || '?').charAt(0).toUpperCase())}</div>`;
+  let treinamentosHtml = '<p class="vazio">Nenhum treinamento cadastrado.</p>';
+  if (f.treinamentos && f.treinamentos.length > 0) {
+    treinamentosHtml = f.treinamentos.map(t => `
+      <div class="treinamento">
+        <div class="treinamento-topo">
+          <div class="treinamento-nome">${escapeHtml(t.nome)}</div>
+          <div class="status-pill" style="background:${t.status.cor}">${escapeHtml(t.status.label)}</div>
+        </div>
+        <div class="treinamento-datas">
+          <div>Realizado: <b>${escapeHtml(t.dataRealizacao || '-')}</b></div>
+          <div>Vencimento: <b>${escapeHtml(t.dataVencimento || '-')}</b></div>
+        </div>
+      </div>
+    `).join('');
+  }
+  const obsHtml = f.observacoes
+    ? `<div class="obs-box">${escapeHtml(f.observacoes)}</div>`
+    : '<p class="vazio">Sem observações registradas.</p>';
+  const documentoHtml = (f.documentos && f.documentos.length > 0)
+    ? `<div class="secao">
+         <h3>Documentos</h3>
+         ${f.documentos.map(d => `
+           <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" class="doc-link">
+             📄 ${escapeHtml(d.nome)}
+           </a>
+         `).join('')}
+       </div>`
+    : '';
+  raiz.innerHTML = `
+    <div class="card">
+      <div class="topo">
+        <div class="marca">QR Code Control HM</div>
+        <div class="foto-wrap">${fotoHtml}</div>
+      </div>
+      <div class="conteudo">
+        <p class="nome">${escapeHtml(f.nome)}</p>
+        <span class="funcao">${escapeHtml(f.funcao || 'Função não informada')}</span>
+        ${f.tipoSanguineo ? `<span class="funcao tipo-sanguineo">🩸 ${escapeHtml(f.tipoSanguineo)}</span>` : ''}
+        <p class="empresa">${escapeHtml(f.empresa || '')}</p>
+        <div class="secao">
+          <h3>Treinamentos realizados</h3>
+          ${treinamentosHtml}
+        </div>
+        <div class="secao">
+          <h3>Observações</h3>
+          ${obsHtml}
+        </div>
+        ${documentoHtml}
+        <div class="rodape">ID do funcionário: ${escapeHtml(f.id)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* Foco no campo de PIN ao abrir */
+document.getElementById('pinFicha').focus();
+</script>
+</body>
+</html>
